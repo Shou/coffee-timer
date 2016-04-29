@@ -1,4 +1,11 @@
 
+@media only screen and (min-resolution: 2dppx) {
+
+html
+{ font-size: 2rem }
+
+}
+
 *
 { box-sizing: border-box }
 
