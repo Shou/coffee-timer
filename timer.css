@@ -1,0 +1,137 @@
+
+*
+{ box-sizing: border-box }
+
+body
+{ justify-content: space-between
+; flex-direction: column
+; height: 100vh
+; margin: 0
+; font-family: "Open Sans", sans-serif
+; background-color: #524743
+; color: #B4A29B
+}
+
+header > select
+{ font-size: 3rem
+; font-weight: bold
+; padding: 1rem
+; width: 100%
+; background-color: #2C3135
+; border: none
+; border-bottom: 0.25rem solid #2E3834
+; color: #E3E7F2
+; text-shadow: 0.1rem 0.1rem 0.1rem #656D74
+             , 0.1rem 0.1rem 0.1rem #656D74
+; cursor: pointer
+}
+
+body,
+nav,
+nav > aside,
+nav > section,
+nav > section > time,
+summary,
+footer
+{ display: flex
+}
+
+time
+{ justify-content: center
+}
+
+nav,
+nav > aside,
+nav > section
+{ flex-wrap: wrap
+}
+
+nav > aside,
+nav > section
+{ flex-grow: 1
+}
+
+time,
+input[type="button"]
+{ font-size: 2rem
+; padding: 1rem 5rem
+; min-width: 16rem
+; height: 5rem
+; margin: 0.5rem
+; border: none
+; position: relative
+; flex-grow: 1
+; text-transform: uppercase
+; font-weight: bold
+}
+
+input[type="button"]
+{ background-color: #f8e4e8
+; border-radius: 0.1rem
+; border-color: #e4d2cb
+; border-width: 0.1rem
+; border-style: solid
+; color: #16231D
+; cursor: pointer
+}
+
+time
+{ background-color: #322621
+; border-radius: 0.1rem
+; border-color: #423332
+; border-width: 0.1rem
+; border-style: solid
+; color: #E3E7F2
+}
+
+time::before
+{ content: attr(data-key)
+; font-size: 1rem
+; font-weight: 300
+; text-transform: uppercase
+; padding: 0 0.5rem
+; vertical-align: top
+; opacity: 0.5
+; position: absolute
+; top: 0
+; left: 0
+; margin: 0.5rem
+}
+
+time > span
+{ position: absolute
+; width: 0%
+; border-bottom: 2px solid #6A7C74
+; bottom: 0
+; left: 0
+}
+
+.hidden
+{ display: none
+}
+
+summary
+{ flex-direction: row
+}
+
+summary > figure
+{ background-color: black
+}
+
+summary > figure[data-meta="ratio"]::before
+{ content: "%"
+; padding: 0.5rem
+}
+summary > figure[data-meta="ratio"]::after
+{ content: "g beans / 240g water"
+}
+
+footer
+{ opacity: 0.5
+; background-color: #2C3135
+; color: #E3E7F2
+; width: 100%
+; padding: 0.5rem
+; justify-content: flex-end
+}
+
