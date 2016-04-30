@@ -336,6 +336,18 @@ function playSound() {
     audio.play()
 }
 
+// XXX necessary for mobile
+var removeAutoplayRestriction = function() {
+    var f = function(e) {
+        var audio = document.querySelector("audio")
+        audio.load()
+
+        window.removeEventListener("touchstart", f)
+    }
+
+    window.addEventListener("touchstart", f)
+}
+
 
 function main() {
     var selectElem = document.querySelector("header > select")
@@ -348,6 +360,8 @@ function main() {
     createTimes()
 
     createMetas()
+
+    removeAutoplayRestriction()
 
     var startButton = document.querySelector("nav > aside > input")
     startButton.addEventListener("click", countDownState)
