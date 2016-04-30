@@ -20,7 +20,7 @@ body
 }
 
 header > select
-{ font-size: 3rem
+{ font-size: 2.5rem
 ; font-weight: bold
 ; padding: 1rem
 ; width: 100%
@@ -111,6 +111,7 @@ time > span
 ; border-bottom: 2px solid #6A7C74
 ; bottom: 0
 ; left: 0
+; transition: width 1s linear
 }
 
 .hidden

@@ -4,6 +4,8 @@ var startText = "Start"
 var resetText = "Reset"
 
 // State
+
+// {{{ Recipes
 var recipes =
     { "ap-gold-2015":
         { "title": "AeroPress Gold 2015"
@@ -65,6 +67,7 @@ var recipes =
             }
         }
     }
+// }}}
 
 var options =
     { "manual": false
@@ -78,36 +81,14 @@ var timeLoop
 var currentRecipe
 
 
-// Data
-
-function TimeState(n, m) {
-    this.type = n
-    this.value = m
-}
-
-var Unchanged = function(m) { return new TimeState(0, m) }
-var Decreased = function(m) { return new TimeState(1, m) }
-var Shifted = function(m) { return new TimeState(2, m) }
-
-function isShifted(d) {
-    return d.type === 2
-}
-
-function isUnchanged(d) {
-    return d.type === 0
-}
-
-function fromTimeState(d) {
-    return d.value
-}
-
-
 // Utils
 
-function id(x) { return x }
+// | Get POSIX time in seconds
+// getPOSIXTime :: IO Integer
+var getPOSIXTime = function() { return Date.now() / 1000 | 0 }
 
-function const_(x) { return function(y) { return x } }
 
+// Program
 
 // createTimes :: Void
 function createTimes() {
@@ -137,57 +118,17 @@ function modifyTimes(f) {
     return f(timeElems)
 }
 
-// getTimes :: IO [Element]
-function getTimes() { return modifyTimes(id) }
+// setTimes :: [Number] -> Void
+var setTimes = R.compose(modifyTimes, R.zipWith(function(t, e) {
+        e.childNodes[0].nodeValue = t
+}))
 
-// resetTimes :: [Element] -> Void
-function resetTimes(timeElems) {
-    var times = recipes[currentRecipe].times
-
-    for (var i = 0, l = timeElems.length; i < l; i++) {
-        var timeElem = timeElems[i]
-
-        var timeKey = timeElem.dataset.key
-        timeElem.childNodes[0].nodeValue = times[timeKey]
-
-        if (times[timeKey] === 0) timeElem.classList.add("hidden")
-        else timeElem.classList.remove("hidden")
-    }
-}
-
-// FIXME zero skips send no Shifted therefore actual index = (i - 1)
-// decreaseTime :: [Element] -> IO Decreased
-function decreaseTimes(timeElems) {
-    var decreased = Unchanged(0)
-
-    for (var i = 0, l = timeElems.length; i < l; i++) {
-        var time = parseInt(timeElems[i].textContent)
-
-        if (isShifted(decreased)) {
-            decreased = Shifted(i)
-
-            if (time === 0) continue
-            else break
-
-        } else if (time === 0) {
-            decreased = Unchanged(i)
-            continue
-
-        } else {
-            timeElems[i].childNodes[0].nodeValue = time - 1
-
-            if (time - 1 === 0) {
-                decreased = Shifted(i)
-                continue
-
-            } else {
-                decreased = Decreased(i)
-                break
-            }
-        }
-    }
-
-    return decreased
+// setProgressBars :: [Number] -> [Number] -> Void
+var setProgressBars = function(recipeTimes, reducedTimes) {
+        R.compose(modifyTimes, R.zipWith(function(ts, e) {
+            var width = 100 - (ts[1] / ts[0] * 100)
+            e.children[0].style.width = width + "%"
+        }), R.zipWith(R.pair, recipeTimes))(reducedTimes)
 }
 
 // TODO leverage adding more options live
@@ -222,40 +163,44 @@ function selectedMethod(selectElem) {
     return selectElem.options[selectElem.selectedIndex].value
 }
 
-// progressBarTimes :: Number -> ([Element] -> Void)
-function progressBar(index) { return function(timeElems) {
-    console.log(index)
-    var time = recipes[currentRecipe].times[timeElems[index].dataset.key]
-    var transText = "width " + time + "s linear"
-    timeElems[index].children[0].style.transition = transText
-    timeElems[index].children[0].style.width = "100%"
-}}
-
-function resetProgressBars(timeElems) {
-    for (var i = 0, l = timeElems.length; i < l; i++) {
-        timeElems[i].children[0].style.transition = "width 1s linear"
-        timeElems[i].children[0].style.width = "0%"
-    }
-}
-
+// TODO resume countdown; android
 // countDownState :: Event -> Void
 function countDownState(e) {
     if (this.value !== resetText) {
         this.value = resetText
-        modifyTimes(progressBar(0))
+
+        var recipeTimes = recipes[currentRecipe].times
+        var currentTimes = recipeTimes
+        var startTime = getPOSIXTime()
+        var goalTime = startTime + R.sum(R.values(currentTimes))
+        var timeDiff = goalTime - startTime
 
         timeLoop = setInterval(function() {
-            var decreased = modifyTimes(decreaseTimes)
+            var elapsedTime = timeDiff - (goalTime - getPOSIXTime())
+            // reducedTimes :: [Number]
+            var reducedTimes = R.nth(1, R.mapAccum(
+                    function(acc, x) {
+                        return R.map(R.max(0), [acc - x, x - acc])
+                    }, elapsedTime, R.values(recipeTimes)))
+            var reducedSum = R.sum(R.values(reducedTimes))
 
-            if (isUnchanged(decreased)) clearInterval(timeLoop)
+            var timeSteps = R.scan(R.add, 0, R.values(recipeTimes))
+            var notMaximum = R.compose(R.not, R.equals(R.last(timeSteps)))
+            timeSteps = R.filter(notMaximum, timeSteps)
+            // Beep when any step reaches 0
+            R.when(R.contains(reducedSum), playSound, timeSteps)
 
-            else if (isShifted(decreased)) {
-                console.log(decreased)
-                playSound()
+            // TODO progress bar
+            // FIXME one step behind
+            setProgressBars(R.values(recipeTimes), reducedTimes)
 
-                modifyTimes(progressBar(fromTimeState(decreased)))
-            }
+            // Print times
+            setTimes(reducedTimes)
 
+            // Finished; stop
+            R.when(R.equals(0), function() {
+                clearInterval(timeLoop)
+            }, reducedSum)
         }, 1000)
 
     } else {
@@ -263,11 +208,14 @@ function countDownState(e) {
     }
 }
 
+// TODO
 // resetCountDown :: Element -> Void
 function resetCountDown(startButton) {
     clearInterval(timeLoop)
-    modifyTimes(resetTimes)
-    modifyTimes(resetProgressBars)
+    var recipeTimes = recipes[currentRecipe].times
+    setTimes(recipeTimes)
+    // XXX unstable
+    setProgressBars(R.values(recipeTimes), R.values(recipeTimes))
     startButton.value = startText
 }
 
@@ -297,7 +245,7 @@ function setSetting(key, val) { modifySetting(key, const_(val)) }
 
 // getSetting :: String -> b -> b
 function getSetting(key, defaultValue) {
-    return modifySetting(key, id, defaultValue)
+    return modifySetting(key, R.identity, defaultValue)
 }
 
 // createMetas :: Void
