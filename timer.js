@@ -161,24 +161,7 @@ var setTimes = modifyZipTimes(function(t, e) {
     e.childNodes[0].nodeValue = formatTime(t)
 })
 
-// TODO FIXME go one step ahead here, start early in countDownState
-// setProgressBars :: [Number] -> [Number] -> Void
 var setProgressBars = function(recipeTimes, reducedTimes) {
-    modifyTimes(R.zipWith(function(ts, e) {
-        var step = R.max(0, 1 / ts[0] * 100 * R.min(1, ts[1]))
-        console.log( "1 / " + ts[0] + " * 100 * min(1, " + ts[1] + ")"
-                   + " = " + (1 / ts[0] * 100 * R.min(1, ts[1]))
-                   )
-        var width = step + 100 - (R.max(ts[1], 0) / ts[0] * 100)
-        console.log( step + " + 100 - max(" + ts[1] + ", 0) / "
-                   + ts[0] + " * 100 = " + width
-                   )
-        e.children[0].style.width = width + "%"
-    }, R.zip(recipeTimes, reducedTimes)))
-}
-
-var setProgressBarsCSS = function(recipeTimes, reducedTimes) {
-    console.log("Setting CSS")
     modifyTimes(R.zipWith(function(ts, e) {
         if (ts[0] - ts[1] > 0) {
             e.children[0].style.width = "100%"
@@ -231,7 +214,7 @@ function countDownState(e) {
         var timeDiff = goalTime - startTime
 
         var firstNonZero = R.findIndex(R.lt(0), R.values(recipeTimes))
-        setProgressBarsCSS( R.values(recipeTimes)
+        setProgressBars( R.values(recipeTimes)
                           , R.over( R.lensIndex(firstNonZero)
                                   , R.add(-1)
                                   , R.values(recipeTimes)
@@ -262,17 +245,13 @@ function countDownState(e) {
                 var firstNonZero = R.findIndex( R.lt(0)
                                               , R.values(reducedTimes)
                                               )
-                setProgressBarsCSS( R.values(recipeTimes)
+                setProgressBars( R.values(recipeTimes)
                                   , R.over( R.lensIndex(firstNonZero)
                                           , R.add(-1)
                                           , R.values(recipeTimes)
                                           )
                                   )
             }, timeSteps)
-
-            // TODO progress bar
-            // FIXME one step behind
-            //setProgressBars(R.values(recipeTimes), reducedTimes)
 
             // Print times
             setTimes(minReducedTimes)
@@ -308,10 +287,6 @@ function resetCountDown(startButton) {
         else e.classList.remove("hidden")
     }, recipeTimes)
 
-    // XXX unstable?
-    //setProgressBars( R.map(R.always(1), recipeTimes)
-    //               , R.map(R.always(2), recipeTimes)
-    //               )
     modifyTimes(R.map(function(e) {
         e.children[0].style.transition = "width 0.1s linear"
         e.children[0].style.width = "0%"
