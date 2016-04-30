@@ -56,6 +56,20 @@ var recipes =
             }
         }
 
+    , "ap-bluebottle":
+        { "title": "AeroPress Blue Bottle"
+        , "times":
+            { "stir": 5
+            , "bloom": 30
+            , "pour": 10
+            , "wait": 60
+            , "press": 30
+            }
+        , "steps": []
+        , "meta":
+            {}
+        }
+
     , "test":
         { "title": "Testing"
         , "times":
@@ -87,6 +101,25 @@ var currentRecipe
 // getPOSIXTime :: IO Integer
 var getPOSIXTime = function() { return Date.now() / 1000 | 0 }
 
+// TODO negative numbers
+var padNumber = function(n) {
+    return (""+n).length > 1 ? n : '0' + n
+}
+
+// formatTime :: Number -> String
+var formatTime = function(n) {
+    var prefix = (""+n)[0] === "-" ? "-" : ""
+    n = Math.abs(n)
+    var tmp = [padNumber(n % 60)]
+
+    while (n / 60 >= 1) {
+        n = Math.floor(n / 60)
+        tmp = R.prepend(padNumber(n % 60), tmp)
+    }
+
+    return prefix + tmp.join(":")
+}
+
 
 // Program
 
@@ -100,7 +133,7 @@ function createTimes() {
 
         var timeElem = document.createElement("time")
         timeElem.dataset.key = timeKey
-        timeElem.textContent = time
+        timeElem.textContent = formatTime(time)
 
         var timeProgressElem = document.createElement("span")
 
@@ -111,24 +144,37 @@ function createTimes() {
     }
 }
 
-// modifyTimes :: IO [Element] -> IO a
-function modifyTimes(f) {
+// modifyTimes :: ([Element] -> [a]) -> [a]
+var modifyTimes = function(f) {
     var timeElems = document.querySelectorAll("nav time")
 
     return f(timeElems)
 }
 
-// setTimes :: [Number] -> Void
-var setTimes = R.compose(modifyTimes, R.zipWith(function(t, e) {
-        e.childNodes[0].nodeValue = t
-}))
+// modifyZipTimes :: (Number -> Element -> a) -> [Number] -> [a]
+var modifyZipTimes = R.curry(function(f, times) {
+    return modifyTimes(R.zipWith(f, times))
+})
 
+// setTimes :: [Number] -> Void
+var setTimes = modifyZipTimes(function(t, e) {
+    e.childNodes[0].nodeValue = formatTime(t)
+})
+
+// TODO FIXME go one step ahead here, start early in countDownState
 // setProgressBars :: [Number] -> [Number] -> Void
 var setProgressBars = function(recipeTimes, reducedTimes) {
-        R.compose(modifyTimes, R.zipWith(function(ts, e) {
-            var width = 100 - (ts[1] / ts[0] * 100)
+        modifyTimes(R.zipWith(function(ts, e) {
+            var step = R.max(0, 1 / ts[0] * 100 * R.min(1, ts[1]))
+            console.log( "1 / " + ts[0] + " * 100 * min(1, " + ts[1] + ")"
+                       + " = " + (1 / ts[0] * 100 * R.min(1, ts[1]))
+                       )
+            var width = step + 100 - (R.max(ts[1], 0) / ts[0] * 100)
+            console.log( step + " + 100 - max(" + ts[1] + ", 0) / "
+                       + ts[0] + " * 100 = " + width
+                       )
             e.children[0].style.width = width + "%"
-        }), R.zipWith(R.pair, recipeTimes))(reducedTimes)
+        }, R.zip(recipeTimes, reducedTimes)))
 }
 
 // TODO leverage adding more options live
@@ -163,16 +209,15 @@ function selectedMethod(selectElem) {
     return selectElem.options[selectElem.selectedIndex].value
 }
 
-// TODO resume countdown; android
+// TODO negative numbers
 // countDownState :: Event -> Void
 function countDownState(e) {
     if (this.value !== resetText) {
         this.value = resetText
 
         var recipeTimes = recipes[currentRecipe].times
-        var currentTimes = recipeTimes
         var startTime = getPOSIXTime()
-        var goalTime = startTime + R.sum(R.values(currentTimes))
+        var goalTime = startTime + R.sum(R.values(recipeTimes))
         var timeDiff = goalTime - startTime
 
         timeLoop = setInterval(function() {
@@ -180,22 +225,33 @@ function countDownState(e) {
             // reducedTimes :: [Number]
             var reducedTimes = R.nth(1, R.mapAccum(
                     function(acc, x) {
-                        return R.map(R.max(0), [acc - x, x - acc])
+                        return [acc - x, x - acc]
                     }, elapsedTime, R.values(recipeTimes)))
-            var reducedSum = R.sum(R.values(reducedTimes))
+            var minReducedTimes = R.zipWith( R.min
+                                           , reducedTimes
+                                           , R.values(recipeTimes)
+                                           )
+
+            var reducedSum = R.sum(R.map(R.max(0), minReducedTimes))
 
             var timeSteps = R.scan(R.add, 0, R.values(recipeTimes))
             var notMaximum = R.compose(R.not, R.equals(R.last(timeSteps)))
             timeSteps = R.filter(notMaximum, timeSteps)
+
             // Beep when any step reaches 0
-            R.when(R.contains(reducedSum), playSound, timeSteps)
+            R.when(R.contains(elapsedTime), playSound, timeSteps)
 
             // TODO progress bar
             // FIXME one step behind
             setProgressBars(R.values(recipeTimes), reducedTimes)
 
             // Print times
-            setTimes(reducedTimes)
+            setTimes(minReducedTimes)
+
+            // Fade negative time's color
+            modifyZipTimes(function(t, e) {
+                if (t <= 0) e.classList.add("faded")
+            }, reducedTimes)
 
             // Finished; stop
             R.when(R.equals(0), function() {
@@ -211,11 +267,22 @@ function countDownState(e) {
 // TODO
 // resetCountDown :: Element -> Void
 function resetCountDown(startButton) {
+    var recipeTimes = R.values(recipes[currentRecipe].times)
+
     clearInterval(timeLoop)
-    var recipeTimes = recipes[currentRecipe].times
+
     setTimes(recipeTimes)
-    // XXX unstable
-    setProgressBars(R.values(recipeTimes), R.values(recipeTimes))
+    modifyZipTimes(function(t, e) {
+        e.classList.remove("faded")
+
+        if (t === 0) e.classList.add("hidden")
+        else e.classList.remove("hidden")
+    }, recipeTimes)
+
+    // XXX unstable?
+    setProgressBars( R.map(R.always(1), recipeTimes)
+                   , R.map(R.always(2), recipeTimes)
+                   )
     startButton.value = startText
 }
 
@@ -241,7 +308,7 @@ function modifySetting(key, f, defaultValue) {
 }
 
 // setSetting :: String -> a -> Void
-function setSetting(key, val) { modifySetting(key, const_(val)) }
+function setSetting(key, val) { modifySetting(key, R.always(val)) }
 
 // getSetting :: String -> b -> b
 function getSetting(key, defaultValue) {

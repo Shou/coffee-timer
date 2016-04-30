@@ -43,6 +43,8 @@ footer
 { display: flex
 }
 
+aside,
+section,
 time
 { justify-content: center
 }
@@ -63,6 +65,7 @@ input[type="button"]
 { font-size: 2rem
 ; padding: 1rem 5rem
 ; min-width: 16rem
+; max-width: 50vw
 ; height: 5rem
 ; margin: 0.5rem
 ; border: none
@@ -116,6 +119,10 @@ time > span
 
 .hidden
 { display: none
+}
+
+.faded
+{ opacity: 0.5
 }
 
 summary
