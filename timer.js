@@ -69,17 +69,6 @@ var recipes =
         , "meta":
             {}
         }
-
-    , "test":
-        { "title": "Testing"
-        , "times":
-            { "stir": 3
-            , "bloom": 0
-            , "pour": 0
-            , "wait": 3
-            , "press": 3
-            }
-        }
     }
 // }}}
 
