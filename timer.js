@@ -120,8 +120,68 @@ var formatTime = function(n) {
     return prefix + tmp.join(":")
 }
 
+var parseTime = function(s) {
+    var ts = s.split(":")
+    var total = 0
+
+    for (var i = 0, l = ts.length; i < l; i++)
+        total += Math.pow(60, (l - i - 1)) * parseInt(ts[i])
+
+    return total
+}
+
 
 // Program
+
+// editTime :: Event -> Void
+var editTime = function(e) {
+    var editElem = this.children[1]
+    editElem.focus()
+}
+
+// saveTime :: Event -> Void
+var saveTime = function(e) {
+    var newTime = parseTime(this.value)
+
+    if (R.not(isNaN(newTime))) {
+        var timeKey = this.parentNode.dataset.key
+        var path = R.lensPath([currentRecipe, "times", timeKey])
+        recipes = R.set(path, newTime, recipes)
+        setSetting("recipes", recipes)
+
+        resetCountDown()
+    }
+
+    this.value = ""
+}
+
+// cancelEdit :: Event -> Void
+var cancelEdit = function(e) {
+    // ESC
+    if (e.keyCode === 27) this.value = "", this.blur()
+    // Enter
+    else if (e.keyCode === 13) this.blur()
+}
+
+// tabShift :: Event -> Void
+var tabShift = function(e) {
+    if (e.keyCode === 9) {
+        e.preventDefault()
+
+        var tabElems = document.getElementsByClassName("tabbable")
+        // No hidden elements
+        tabElems = R.filter(R.path(["offsetParent"]), tabElems)
+        var tabIndex = R.findIndex(R.equals(e.target), tabElems)
+        var tabDirection = e.shiftKey ? -1 : 1
+
+        var tabElem = ( index = (tabIndex + tabDirection)
+                      , safeIndex = Math.abs(index % tabElems.length)
+                      , tabElems[safeIndex]
+                      )
+
+        if (tabElem) tabElem.focus()
+    }
+}
 
 // createTimes :: Void
 function createTimes() {
@@ -135,11 +195,19 @@ function createTimes() {
         timeElem.dataset.key = timeKey
         timeElem.textContent = formatTime(time)
 
+        timeElem.addEventListener("click", editTime)
+
         var timeProgressElem = document.createElement("span")
+        var editElem = document.createElement("input")
+        editElem.classList.add("tabbable")
+
+        editElem.addEventListener("blur", saveTime)
+        editElem.addEventListener("keydown", cancelEdit)
 
         if (time === 0) timeElem.classList.add("hidden")
 
         timeElem.appendChild(timeProgressElem)
+        timeElem.appendChild(editElem)
         timesWrapper.appendChild(timeElem)
     }
 }
@@ -173,8 +241,10 @@ var setProgressBars = function(recipeTimes, reducedTimes) {
 // TODO leverage adding more options live
 // createOptions :: Element -> Void
 function createOptions(selectElem) {
-    // TODO delet chilren
-    // OR make a modifyOptions
+    // Remove old children
+    R.times(function(n) {
+        selectElem.removeChild(selectElem.children[0])
+    }, selectElem.children.length)
 
     var index = i = 0
 
@@ -268,13 +338,14 @@ function countDownState(e) {
         }, 1000)
 
     } else {
-        resetCountDown(this)
+        resetCountDown()
     }
 }
 
-// TODO
-// resetCountDown :: Element -> Void
-function resetCountDown(startButton) {
+// resetCountDown :: Void
+function resetCountDown() {
+    var startButton = document.querySelector("nav > aside > input")
+
     var recipeTimes = R.values(recipes[currentRecipe].times)
 
     clearInterval(timeLoop)
@@ -295,19 +366,20 @@ function resetCountDown(startButton) {
 }
 
 // changeRecipe :: Event -> Void
-function changeRecipe(e) {
+function changeRecipeState(e) {
     currentRecipe = this.value
 
     setSetting("currentRecipe", currentRecipe)
 
-    var startButton = document.querySelector("nav > aside > input")
-    resetCountDown(startButton)
+    resetCountDown()
 }
 
 // modifySetting :: String -> (a -> b) -> b -> b
 function modifySetting(key, f, defaultValue) {
+    var tmp
     try {
-        defaultValue = f(JSON.parse(localStorage[key]))
+        tmp = f(JSON.parse(localStorage[key]))
+        defaultValue = tmp
     } catch(e) {}
 
     localStorage[key] = JSON.stringify(defaultValue)
@@ -356,22 +428,75 @@ var removeAutoplayRestriction = function() {
     window.addEventListener("touchstart", f)
 }
 
+var addRecipe = function(e) {
+    var input = this.nextElementSibling.nextElementSibling
+    input.style.display = "block"
+    input.focus()
+}
+
+var removeRecipe = function(e) {
+    delete recipes[currentRecipe]
+    setSetting("recipes", recipes)
+
+    var select = this.parentNode.children[0]
+    createOptions(select)
+    changeRecipeState.call(select)
+}
+
+var saveRecipe = function(e) {
+    this.style.display = "none"
+
+    if (this.value.length > 0) {
+        recipes["custom-" + this.value] =
+            { title: this.value
+            , times:
+                { "stir": 1
+                , "bloom": 1
+                , "pour": 1
+                , "wait": 1
+                , "press": 1
+                }
+            }
+
+        setSetting("recipes", recipes)
+        createOptions(this.parentNode.children[0])
+
+        var select = this.parentNode.children[0]
+        select.selectedIndex = select.children.length - 1
+        changeRecipeState.call(select)
+
+        resetCountDown()
+    }
+}
+
 
 function main() {
+    recipes = getSetting("recipes", recipes)
+
     var selectElem = document.querySelector("header > select")
     createOptions(selectElem)
 
-    selectElem.addEventListener("change", changeRecipe)
+    selectElem.addEventListener("change", changeRecipeState)
+
+    var createButtons =
+        document.querySelectorAll("header > input[type='button']")
+    createButtons[0].addEventListener("click", addRecipe)
+    createButtons[1].addEventListener("click", removeRecipe)
+    var createInput = createButtons[1].nextElementSibling
+    createInput.addEventListener("blur", saveRecipe)
+    createInput.addEventListener("keydown", cancelEdit)
 
     currentRecipe = getSetting("currentRecipe", selectedMethod(selectElem))
 
     createTimes()
 
-    createMetas()
+    //createMetas()
 
     removeAutoplayRestriction()
 
     var startButton = document.querySelector("nav > aside > input")
     startButton.addEventListener("click", countDownState)
+
+    window.addEventListener("keydown", tabShift)
 }
 

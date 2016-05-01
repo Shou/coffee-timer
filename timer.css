@@ -19,21 +19,47 @@ body
 ; color: #B4A29B
 }
 
-header > select
+header
+{ position: relative
+}
+
+header > select,
+header > input
 { font-size: 2.5rem
 ; font-weight: bold
 ; padding: 1rem
-; width: 100%
 ; background-color: #2C3135
 ; border: none
 ; border-bottom: 0.25rem solid #2E3834
 ; color: #E3E7F2
 ; text-shadow: 0.1rem 0.1rem 0.1rem #656D74
              , 0.1rem 0.1rem 0.1rem #656D74
-; cursor: pointer
+}
+
+
+header > select
+{ cursor: pointer
+}
+
+header > input[type="button"]
+{ padding: 0 2rem
+; font-size: 2rem
+; background-color: #2E3834
+; border: none
+; color: #E3E7F2
+}
+
+header > input[type="text"]
+{ position: absolute
+; top: 0
+; left: 0
+; width: 100%
+; height: 100%
+; display: none
 }
 
 body,
+header,
 nav,
 nav > aside,
 nav > section,
@@ -55,13 +81,16 @@ nav > section
 { flex-wrap: wrap
 }
 
+header > select,
 nav > aside,
-nav > section
+nav > section,
+time,
+nav input[type="button"]
 { flex-grow: 1
 }
 
 time,
-input[type="button"]
+nav input[type="button"]
 { font-size: 2rem
 ; padding: 1rem 5rem
 ; min-width: 16rem
@@ -70,12 +99,11 @@ input[type="button"]
 ; margin: 0.5rem
 ; border: none
 ; position: relative
-; flex-grow: 1
 ; text-transform: uppercase
 ; font-weight: bold
 }
 
-input[type="button"]
+nav input[type="button"]
 { background-color: #f8e4e8
 ; border-radius: 0.1rem
 ; border-color: #e4d2cb
@@ -85,7 +113,7 @@ input[type="button"]
 ; cursor: pointer
 }
 
-time
+time, time > input
 { background-color: #322621
 ; border-radius: 0.1rem
 ; border-color: #423332
@@ -116,6 +144,23 @@ time > span
 ; left: 0
 ; transition: width 1s linear
 }
+
+time > input
+{ position: absolute
+; top: 0
+; left: 0
+; width: 100%
+; height: 100%
+; font-size: 2rem
+; padding: 1rem 5rem
+; text-transform: uppercase
+; font-weight: bold
+; text-align: center
+; opacity: 0
+}
+
+time > input:focus
+{ opacity: 1 }
 
 .hidden
 { display: none
