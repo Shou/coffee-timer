@@ -24,29 +24,46 @@ header
 }
 
 header > select,
-header > input
+header > input[type="text"]
 { font-size: 2.5rem
 ; font-weight: bold
 ; padding: 1rem
 ; background-color: #2C3135
 ; border: none
-; border-bottom: 0.25rem solid #2E3834
+; border-bottom: 0.25rem solid #151B1F
 ; color: #E3E7F2
 ; text-shadow: 0.1rem 0.1rem 0.1rem #656D74
              , 0.1rem 0.1rem 0.1rem #656D74
 }
 
+header > select:hover
+{ background-color: #151B1F
+}
 
-header > select
+header > select,
+input[type="button"]
 { cursor: pointer
 }
 
 header > input[type="button"]
-{ padding: 0 2rem
+{ min-width: 4rem
 ; font-size: 2rem
 ; background-color: #2E3834
 ; border: none
+; border-bottom: 0.25rem solid #16211D
 ; color: #E3E7F2
+}
+
+header > input[type="button"]:hover
+{ background-color: #16211D
+}
+
+input[type="button"], select
+{ transition: all 0.3s ease-in-out
+}
+
+input[type="button"]:hover, select:hover
+{ transition: all 0.2s ease-in-out
 }
 
 header > input[type="text"]
@@ -109,8 +126,16 @@ nav input[type="button"]
 ; border-color: #e4d2cb
 ; border-width: 0.1rem
 ; border-style: solid
+; border-bottom: 0.3rem solid #e8d4d8
 ; color: #16231D
-; cursor: pointer
+; text-shadow: 0.1rem 0.1rem 0.1rem #f8f8f8
+}
+
+nav input[type="button"]:hover
+{ background-color: #B5A39C
+; border-color: #867670
+; border-bottom: 0.3rem solid #A5938C
+; text-shadow: 0.1rem 0.1rem 0.1rem #b8b8b8
 }
 
 time, time > input
@@ -119,6 +144,7 @@ time, time > input
 ; border-color: #423332
 ; border-width: 0.1rem
 ; border-style: solid
+; border-bottom: 0.3rem solid #221611
 ; color: #E3E7F2
 }
 
@@ -139,7 +165,7 @@ time::before
 time > span
 { position: absolute
 ; width: 0%
-; border-bottom: 2px solid #6A7C74
+; border-bottom: 0.2rem solid #6A7C74
 ; bottom: 0
 ; left: 0
 ; transition: width 1s linear
