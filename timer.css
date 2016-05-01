@@ -19,12 +19,11 @@ body
 ; color: #B4A29B
 }
 
+input:focus, select:focus
+{ outline: none }
+
 header
 { position: relative
-}
-
-header, nav, footer
-{ width: 100%
 }
 
 header > select,
@@ -62,11 +61,15 @@ header > input[type="button"]:hover
 { background-color: #16211D
 }
 
-input[type="button"], select
+input[type="button"],
+select,
+time
 { transition: all 0.3s ease-in-out
 }
 
-input[type="button"]:hover, select:hover
+input[type="button"]:hover,
+select:hover,
+time:hover
 { transition: all 0.2s ease-in-out
 }
 
@@ -131,21 +134,21 @@ nav input[type="button"]
 }
 
 nav input[type="button"]
-{ background-color: #f8e4e8
+{ background-color: #B5A39C
 ; border-radius: 0.1rem
 ; border-color: #e4d2cb
 ; border-width: 0.1rem
 ; border-style: solid
-; border-bottom: 0.3rem solid #e8d4d8
+; border-bottom: 0.3rem solid #A5938C
 ; color: #16231D
-; text-shadow: 0.1rem 0.1rem 0.1rem #f8f8f8
+; text-shadow: 0.1rem 0.1rem 0.1rem #b8b8b8
 }
 
 nav input[type="button"]:hover
-{ background-color: #B5A39C
+{ background-color: #f8e4e8
 ; border-color: #867670
-; border-bottom: 0.3rem solid #A5938C
-; text-shadow: 0.1rem 0.1rem 0.1rem #b8b8b8
+; border-bottom: 0.3rem solid #e8d4d8
+; text-shadow: 0.1rem 0.1rem 0.1rem #f8f8f8
 }
 
 time, time > input
@@ -156,6 +159,11 @@ time, time > input
 ; border-style: solid
 ; border-bottom: 0.3rem solid #221611
 ; color: #E3E7F2
+}
+
+time:hover
+{ background-color: #423631
+; border-bottom: 0.3rem solid #322621
 }
 
 time::before
