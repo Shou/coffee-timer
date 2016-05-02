@@ -177,7 +177,6 @@ var tabShift = function(e) {
         var tabDirection = e.shiftKey ? -1 : 1
 
         var tabElem = ( i = mod(tabIndex + tabDirection, tabElems.length)
-                      , console.log(i)
                       , tabElems[i]
                       )
 
