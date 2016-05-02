@@ -78,10 +78,16 @@ var options =
     }
 
 // timeLoop :: Interval
-var timeLoop
+var timeLoop = null
 
 // currentRecipe :: String
-var currentRecipe
+var currentRecipe = null
+
+// wasDocumentHidden :: Bool
+var wasDocumentHidden = false
+
+// beepWorker :: WebWorker
+var beepWorker = null
 
 
 // Utils
@@ -91,6 +97,7 @@ var currentRecipe
 var getPOSIXTime = function() { return Date.now() / 1000 | 0 }
 
 // TODO negative numbers
+// padNumber :: Number -> String
 var padNumber = function(n) {
     return (""+n).length > 1 ? n : '0' + n
 }
@@ -109,6 +116,7 @@ var formatTime = function(n) {
     return prefix + tmp.join(":")
 }
 
+// parseTime :: String -> Number
 var parseTime = function(s) {
     var ts = s.split(":")
     var total = 0
@@ -118,6 +126,9 @@ var parseTime = function(s) {
 
     return total
 }
+
+// findNotZeroIndex :: [Number] -> Number
+var findNotZeroIndex = R.findIndex(R.lt(0))
 
 
 // Program
@@ -218,14 +229,15 @@ var setTimes = modifyZipTimes(function(t, e) {
     e.childNodes[0].nodeValue = formatTime(t)
 })
 
-var setProgressBars = function(recipeTimes, reducedTimes) {
-    modifyTimes(R.zipWith(function(ts, e) {
-        if (ts[0] - ts[1] > 0) {
-            e.children[0].style.width = "100%"
-            e.children[0].style.transition = "width " + ts[0] + "s linear"
+var setProgressBar = R.curry(function(index, width, time) {
+    modifyTimes(function(timeElems) {
+        if (index >= 0 && index < timeElems.length) {
+            var bar = timeElems[index].children[0]
+            bar.style.width = width + "%"
+            bar.style.transition = "width " + time + "s linear"
         }
-    }, R.zip(recipeTimes, reducedTimes)))
-}
+    })
+})
 
 // TODO leverage adding more options live
 // createOptions :: Element -> Void
@@ -261,69 +273,95 @@ function selectedMethod(selectElem) {
     return selectElem.options[selectElem.selectedIndex].value
 }
 
-// TODO negative numbers
+// FIXME trim some fat on this function
 // countDownState :: Event -> Void
 function countDownState(e) {
     if (this.value !== resetText) {
         this.value = resetText
 
-        var recipeTimes = recipes[currentRecipe].times
+        var recipeTimes = R.values(recipes[currentRecipe].times)
+        var timeSteps = R.scan(R.add, 0, recipeTimes)
         var startTime = getPOSIXTime()
-        var goalTime = startTime + R.sum(R.values(recipeTimes))
+        var goalTime = startTime + R.sum(recipeTimes)
         var timeDiff = goalTime - startTime
 
-        var firstNonZero = R.findIndex(R.lt(0), R.values(recipeTimes))
-        setProgressBars( R.values(recipeTimes)
-                          , R.over( R.lensIndex(firstNonZero)
-                                  , R.add(-1)
-                                  , R.values(recipeTimes)
-                                  )
-                          )
+        var notZeroIndex = findNotZeroIndex(recipeTimes)
+        setProgressBar( notZeroIndex
+                      , 100
+                      , recipeTimes[notZeroIndex]
+                      )
+
+        var notZero = R.compose(R.not, R.equals(0))
+        beepWorker.postMessage(R.filter(notZero, timeSteps))
 
         timeLoop = setInterval(function() {
             var elapsedTime = timeDiff - (goalTime - getPOSIXTime())
 
-            // reducedTimes :: [Number]
-            var reducedTimes = R.nth(1, R.mapAccum(function(acc, x) {
-                    return [acc - x, x - acc]
-                }, elapsedTime, R.values(recipeTimes)))
-
-            var minReducedTimes = R.zipWith( R.min
-                                           , reducedTimes
-                                           , R.values(recipeTimes)
-                                           )
-
-            var reducedSum = R.sum(R.map(R.max(0), minReducedTimes))
-
-            var timeSteps = R.scan(R.add, 0, R.values(recipeTimes))
-
+            // XXX workers
             // Beep when any step reaches 0
-            R.when(R.contains(elapsedTime), playSound, timeSteps)
+            //R.when(R.contains(elapsedTime), playSound, timeSteps)
 
-            R.when(R.contains(elapsedTime), function() {
-                var firstNonZero = R.findIndex( R.lt(0)
-                                              , R.values(reducedTimes)
-                                              )
-                setProgressBars( R.values(recipeTimes)
-                                  , R.over( R.lensIndex(firstNonZero)
-                                          , R.add(-1)
-                                          , R.values(recipeTimes)
-                                          )
+            // Don't waste CPU cycles!
+            if (! document.hidden) {
+                // reducedTimes :: [Number]
+                var reducedTimes = R.nth(1, R.mapAccum(function(acc, x) {
+                        return [acc - x, x - acc]
+                    }, elapsedTime, recipeTimes))
+
+                var minReducedTimes = R.zipWith( R.min
+                                               , reducedTimes
+                                               , recipeTimes
+                                               )
+                var minZeroReducedTimes = R.map(R.max(0), minReducedTimes)
+
+                // TODO set ALL bars
+                // Resume progress bars
+                if (wasDocumentHidden) {
+                    var notZeroIndex =
+                        findNotZeroIndex(reducedTimes)
+                    R.map(function(index) {
+                        var currentWidth =
+                            ( x = recipeTimes[index]
+                            , y = minZeroReducedTimes[index]
+                            , ((x - y) / x) * 100
+                            )
+                        setProgressBar(index, currentWidth, 0)
+                    }, R.range(0, minReducedTimes.length))
+                    // XXX hack: let bar width adjust first
+                    setTimeout(function() {
+                        setProgressBar( notZeroIndex
+                                      , 100
+                                      , reducedTimes[notZeroIndex]
+                                      )
+                    }, 10)
+
+                    // Reset
+                    wasDocumentHidden = false
+                }
+
+                // Set further progress bars
+                R.when(R.contains(elapsedTime), function() {
+                    var notZeroIndex =
+                        findNotZeroIndex(reducedTimes)
+                    setProgressBar( notZeroIndex
+                                  , 100
+                                  , recipeTimes[notZeroIndex]
                                   )
-            }, timeSteps)
+                }, timeSteps)
 
-            // Print times
-            setTimes(minReducedTimes)
+                // Print times
+                setTimes(minReducedTimes)
 
-            // Fade negative time's color
-            modifyZipTimes(function(t, e) {
-                if (t <= 0) e.classList.add("faded")
-            }, reducedTimes)
+                // Fade negative time's color
+                modifyZipTimes(function(t, e) {
+                    if (t <= 0) e.classList.add("faded")
+                }, reducedTimes)
 
-            // Finished; stop
-            R.when(R.equals(0), function() {
-                clearInterval(timeLoop)
-            }, reducedSum)
+                // Finished; stop
+                R.when(R.equals(0), function() {
+                    clearInterval(timeLoop)
+                }, R.sum(minZeroReducedTimes))
+            }
         }, 1000)
 
     } else {
@@ -333,6 +371,8 @@ function countDownState(e) {
 
 // resetCountDown :: Void
 function resetCountDown() {
+    beepWorker.postMessage(null)
+
     var startButton = document.querySelector("nav > aside > input")
 
     var recipeTimes = R.values(recipes[currentRecipe].times)
@@ -458,8 +498,17 @@ var saveRecipe = function(e) {
     }
 }
 
+var resume = function(e) {
+    if (document.hidden) wasDocumentHidden = true
+}
+
 
 function main() {
+    beepWorker = new Worker("beep.js")
+    beepWorker.addEventListener("message", function(e) {
+        playSound()
+    })
+
     recipes = getSetting("recipes", recipes)
 
     var selectElem = document.querySelector("header > select")
@@ -487,5 +536,7 @@ function main() {
     startButton.addEventListener("click", countDownState)
 
     window.addEventListener("keydown", tabShift)
+
+    document.addEventListener("visibilitychange", resume)
 }
 

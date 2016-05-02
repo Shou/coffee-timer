@@ -39,6 +39,12 @@ header > input[type="text"]
              , 0.1rem 0.1rem 0.1rem #656D74
 }
 
+header > select
+{ -webkit-appearance: none
+; white-space: pre-wrap
+; max-width: calc(100% - 8rem)
+}
+
 header > select:hover
 { background-color: #151B1F
 }
@@ -49,7 +55,7 @@ input[type="button"]
 }
 
 header > input[type="button"]
-{ min-width: 4rem
+{ width: 4rem
 ; font-size: 2rem
 ; background-color: #2E3834
 ; border: none
