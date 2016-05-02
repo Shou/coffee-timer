@@ -1,8 +1,15 @@
 
+@media only screen and (min-resolution: 1dppx) {
+
+html
+{ font-size: 16px }
+
+}
+
 @media only screen and (min-resolution: 2dppx) {
 
 html
-{ font-size: 2rem }
+{ font-size: 32px }
 
 }
 
@@ -40,8 +47,7 @@ header > input[type="text"]
 }
 
 header > select
-{ -webkit-appearance: none
-; white-space: pre-wrap
+{ white-space: pre-wrap
 ; max-width: calc(100% - 8rem)
 }
 
@@ -53,6 +59,12 @@ header > select:focus
 header > select,
 input[type="button"]
 { cursor: pointer
+}
+
+input,
+header > select
+{ -webkit-appearance: none
+; -moz-appearance: none
 }
 
 header > input[type="button"]
