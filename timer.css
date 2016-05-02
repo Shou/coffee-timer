@@ -45,7 +45,8 @@ header > select
 ; max-width: calc(100% - 8rem)
 }
 
-header > select:hover
+header > select:hover,
+header > select:focus
 { background-color: #151B1F
 }
 
@@ -63,7 +64,8 @@ header > input[type="button"]
 ; color: #E3E7F2
 }
 
-header > input[type="button"]:hover
+header > input[type="button"]:hover,
+header > input[type="button"]:focus
 { background-color: #16211D
 }
 
@@ -150,7 +152,8 @@ nav input[type="button"]
 ; text-shadow: 0.1rem 0.1rem 0.1rem #b8b8b8
 }
 
-nav input[type="button"]:hover
+nav input[type="button"]:hover,
+nav input[type="button"]:focus
 { background-color: #f8e4e8
 ; border-color: #867670
 ; border-bottom: 0.3rem solid #e8d4d8
@@ -167,7 +170,8 @@ time, time > input
 ; color: #E3E7F2
 }
 
-time:hover
+time:hover,
+time:focus
 { background-color: #423631
 ; border-bottom: 0.3rem solid #322621
 }

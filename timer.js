@@ -106,11 +106,11 @@ var padNumber = function(n) {
 var formatTime = function(n) {
     var prefix = (""+n)[0] === "-" ? "-" : ""
     n = Math.abs(n)
-    var tmp = [padNumber(n % 60)]
+    var tmp = [padNumber(mod(n, 60))]
 
     while (n / 60 >= 1) {
         n = Math.floor(n / 60)
-        tmp = R.prepend(padNumber(n % 60), tmp)
+        tmp = R.prepend(padNumber(mod(n, 60)), tmp)
     }
 
     return prefix + tmp.join(":")
@@ -129,6 +129,8 @@ var parseTime = function(s) {
 
 // findNotZeroIndex :: [Number] -> Number
 var findNotZeroIndex = R.findIndex(R.lt(0))
+
+var mod = function(n, m) { return ((n % m) + m) % m }
 
 
 // Program
@@ -174,9 +176,9 @@ var tabShift = function(e) {
         var tabIndex = R.findIndex(R.equals(e.target), tabElems)
         var tabDirection = e.shiftKey ? -1 : 1
 
-        var tabElem = ( index = (tabIndex + tabDirection)
-                      , safeIndex = Math.abs(index % tabElems.length)
-                      , tabElems[safeIndex]
+        var tabElem = ( i = mod(tabIndex + tabDirection, tabElems.length)
+                      , console.log(i)
+                      , tabElems[i]
                       )
 
         if (tabElem) tabElem.focus()
@@ -504,10 +506,10 @@ var resume = function(e) {
 
 
 function main() {
-    beepWorker = new Worker("beep.js")
-    beepWorker.addEventListener("message", function(e) {
-        playSound()
-    })
+//    beepWorker = new Worker("beep.js")
+//    beepWorker.addEventListener("message", function(e) {
+//        playSound()
+//    })
 
     recipes = getSetting("recipes", recipes)
 
