@@ -506,10 +506,10 @@ var resume = function(e) {
 
 
 function main() {
-//    beepWorker = new Worker("beep.js")
-//    beepWorker.addEventListener("message", function(e) {
-//        playSound()
-//    })
+    beepWorker = new Worker("beep.js")
+    beepWorker.addEventListener("message", function(e) {
+        playSound()
+    })
 
     recipes = getSetting("recipes", recipes)
 
