@@ -65,11 +65,13 @@ input,
 header > select
 { -webkit-appearance: none
 ; -moz-appearance: none
+; font-family: "Open Sans", sans-serif
 }
 
 header > input[type="button"]
 { width: 4rem
 ; font-size: 2rem
+; font-weight: 800
 ; background-color: #2E3834
 ; border: none
 ; border-bottom: 0.25rem solid #16211D
