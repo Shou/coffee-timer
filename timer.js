@@ -496,6 +496,8 @@ var saveRecipe = function(e) {
         changeRecipeState.call(select)
 
         resetCountDown()
+
+        this.value = ""
     }
 }
 
