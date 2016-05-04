@@ -83,6 +83,16 @@ header > input[type="button"]:focus
 { background-color: #16211D
 }
 
+header > input[type="button"]:nth-of-type(2)
+{ background-color: #500E22
+; border-color: #320110
+}
+
+header > input[type="button"]:nth-of-type(2):hover,
+header > input[type="button"]:nth-of-type(2):focus
+{ background-color: #320110
+}
+
 input[type="button"],
 select,
 time
@@ -131,7 +141,7 @@ header > select,
 nav > aside,
 nav > section,
 time,
-nav input[type="button"]
+nav > aside > input[type="button"]
 { flex-grow: 1
 }
 
@@ -142,7 +152,7 @@ footer
 }
 
 time,
-nav input[type="button"]
+nav > aside > input[type="button"]
 { font-size: 2rem
 ; padding: 1rem 5rem
 ; min-width: 16rem
@@ -155,7 +165,7 @@ nav input[type="button"]
 ; font-weight: bold
 }
 
-nav input[type="button"]
+nav > aside > input[type="button"]
 { background-color: #B5A39C
 ; border-radius: 0.1rem
 ; border-color: #e4d2cb
@@ -166,12 +176,16 @@ nav input[type="button"]
 ; text-shadow: 0.1rem 0.1rem 0.1rem #b8b8b8
 }
 
-nav input[type="button"]:hover,
-nav input[type="button"]:focus
+nav > aside > input[type="button"]:hover,
+nav > aside > input[type="button"]:focus
 { background-color: #f8e4e8
 ; border-color: #867670
 ; border-bottom: 0.3rem solid #e8d4d8
 ; text-shadow: 0.1rem 0.1rem 0.1rem #f8f8f8
+}
+
+time
+{ overflow: hidden
 }
 
 time, time > input
@@ -182,6 +196,10 @@ time, time > input
 ; border-style: solid
 ; border-bottom: 0.3rem solid #221611
 ; color: #E3E7F2
+}
+
+time > input
+{ border: none
 }
 
 time:hover,
@@ -213,7 +231,7 @@ time > span
 ; transition: width 1s linear
 }
 
-time > input
+time > input[type="text"]
 { position: absolute
 ; top: 0
 ; left: 0
@@ -227,8 +245,30 @@ time > input
 ; opacity: 0
 }
 
-time > input:focus
+time > input[type="text"]:focus
 { opacity: 1 }
+
+time > input[type="button"]
+{ position: absolute
+; top: 0
+; right: -4rem
+; height: 100%
+; border: none
+; background-color: #500E22
+; padding: 0 1rem
+; font-size: 1.5rem
+; font-weight: bold
+}
+
+time > input[type="button"]:hover,
+time > input[type="button"]:focus
+{ background-color: #320110
+}
+
+time:hover > input[type="button"],
+time:focus > input[type="button"]
+{ right: 0
+}
 
 .hidden
 { display: none

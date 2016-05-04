@@ -96,7 +96,6 @@ var beepWorker = null
 // getPOSIXTime :: IO Integer
 var getPOSIXTime = function() { return Date.now() / 1000 | 0 }
 
-// TODO negative numbers
 // padNumber :: Number -> String
 var padNumber = function(n) {
     return (""+n).length > 1 ? n : '0' + n
@@ -157,6 +156,14 @@ var saveTime = function(e) {
     this.value = ""
 }
 
+var hideTime = function(e) {
+    var timeKey = this.parentNode.dataset.key
+    var path = R.lensPath([currentRecipe, "times", timeKey])
+    recipes = R.set(path, 0, recipes)
+
+    resetCountDown()
+}
+
 // cancelEdit :: Event -> Void
 var cancelEdit = function(e) {
     // ESC
@@ -200,15 +207,23 @@ function createTimes() {
 
         var timeProgressElem = document.createElement("span")
         var editElem = document.createElement("input")
+        editElem.type = "text"
         editElem.classList.add("tabbable")
 
         editElem.addEventListener("blur", saveTime)
         editElem.addEventListener("keydown", cancelEdit)
 
+        var timeDeleteButton = document.createElement("input")
+        timeDeleteButton.type = "button"
+        timeDeleteButton.value = "X"
+
+        timeDeleteButton.addEventListener("click", hideTime)
+
         if (time === 0) timeElem.classList.add("hidden")
 
         timeElem.appendChild(timeProgressElem)
         timeElem.appendChild(editElem)
+        timeElem.appendChild(timeDeleteButton)
         timesWrapper.appendChild(timeElem)
     }
 }
@@ -541,5 +556,11 @@ function main() {
     window.addEventListener("keydown", tabShift)
 
     document.addEventListener("visibilitychange", resume)
+
+    var pc = new RTCPeerConnection()
+
+    pc.onaddstream = function(o) {
+        console.log(o)
+    }
 }
 
